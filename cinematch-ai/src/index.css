@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --red: #E50914;
+    --purple: #7C3AED;
+    --dark: #0a0a0a;
+    --card: #111111;
+    --surface: #1a1a1a;
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #f0f0f0;
+    --muted: #999999;
+  }
+
+  body {
+    background-color: var(--dark);
+    color: var(--text);
+  }
+
+  /* Custom outline focus states for accessibility */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid var(--red) !important;
+    outline-offset: 2px;
+  }
+}
+
+/* Custom Utilities */
+@layer utilities {
+  /* Scrollbar hiding utilities */
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+
+  /* Thin scrollbar for carousels */
+  .thin-scrollbar::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  
+  .thin-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .thin-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 9999px;
+  }
+
+  .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+
+  /* Shimmer background animation for skeletons */
+  .shimmer {
+    background: linear-gradient(90deg, #111111 25%, #1a1a1a 50%, #111111 75%);
+    background-size: 200% 100%;
+    animation: shimmer-animation 1.5s infinite linear;
+  }
+
+  @keyframes shimmer-animation {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Text stroke for numbers */
+  .text-stroke-rank {
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.3);
+    color: transparent;
+  }
+}
+
+/* Custom scroll snap for horizontal scrolling */
+.carousel-snap {
+  scroll-snap-type: x mandatory;
+}
+
+.carousel-snap-item {
+  scroll-snap-align: start;
+}
