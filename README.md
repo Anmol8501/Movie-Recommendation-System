@@ -6,14 +6,6 @@ Featuring unblocked, lightning-fast movie poster rendering powered by the **OMDb
 
 ---
 
-## 👥 Creator Details
-
-Developed by **Anmol Kuntal**. Connect with the author or view the repository:
-* 📸 **Instagram:** [anmo_lkuntal](https://www.instagram.com/anmo_lkuntal)
-* 🐙 **GitHub Repository:** [Movie-Recommendation-System](https://github.com/Anmol8501/Movie-Recommendation-System)
-
----
-
 ## 🌟 Key Features
 
 * **Content-Based Recommendation Engine:** Uses tokenized movie overviews, genres, cast, crew, and keywords processed with NLTK stemming and Scikit-Learn `CountVectorizer` to compute similarity matrices.
