@@ -40,8 +40,18 @@ export const Footer = () => {
             <Link to="/" className="hover:text-white transition-colors">Home</Link>
             <a href="#genres" className="hover:text-white transition-colors">Genres</a>
             <Link to="/watchlist" className="hover:text-white transition-colors">Watchlist</Link>
-            <a href="#" className="hover:text-white transition-colors">About Us</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('open-about-modal'))} 
+              className="hover:text-white transition-colors text-left focus:outline-none"
+            >
+              About Us
+            </button>
+            <button 
+              onClick={() => window.dispatchEvent(new CustomEvent('open-contact-modal'))} 
+              className="hover:text-white transition-colors text-left focus:outline-none"
+            >
+              Contact
+            </button>
           </div>
         </div>
 

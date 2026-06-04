@@ -406,5 +406,6 @@ def top_rated_api():
     })
 
 if __name__ == '__main__':
-    # Run server locally on port 5000
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    # Run server dynamically on environment port (Render) or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

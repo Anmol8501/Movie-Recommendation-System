@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import MovieDetailPage from './pages/MovieDetailPage';
 import WatchlistPage from './pages/WatchlistPage';
 import SearchResultsPage from './pages/SearchResultsPage';
+import AboutContactModals from './components/AboutContactModals';
 
 /**
  * Main application routing configuration binding page components.
@@ -11,6 +12,7 @@ import SearchResultsPage from './pages/SearchResultsPage';
 function App() {
   return (
     <Router>
+      <AboutContactModals />
       <Routes>
         {/* / → <HomePage /> */}
         <Route path="/" element={<HomePage />} />

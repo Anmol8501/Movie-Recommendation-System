@@ -1,0 +1,30 @@
+services:
+  # 1. Python Flask Backend Web Service
+  - type: web
+    name: cinematch-api-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: PYTHONUNBUFFERED
+        value: "true"
+
+  # 2. React Vite Frontend Static Site
+  - type: web
+    name: cinematch-ai-frontend
+    env: static
+    buildCommand: npm run build
+    publishDir: dist
+    rootDir: cinematch-ai
+    envVars:
+      - key: VITE_BACKEND_API_URL
+        fromService:
+          name: cinematch-api-backend
+          type: web
+          property: url
+      - key: VITE_OMDB_API_KEY
+        value: 7d4dc7e4
+      - key: VITE_APP_NAME
+        value: CineMatch AI

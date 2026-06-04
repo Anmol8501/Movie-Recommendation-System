@@ -270,6 +270,25 @@ export const Navbar = () => {
                     </Link>
                   );
                 })}
+                
+                <button 
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    window.dispatchEvent(new CustomEvent('open-about-modal'));
+                  }}
+                  className="font-body font-medium text-left transition-colors text-white/70 hover:text-white"
+                >
+                  About Us
+                </button>
+                <button 
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    window.dispatchEvent(new CustomEvent('open-contact-modal'));
+                  }}
+                  className="font-body font-medium text-left transition-colors text-white/70 hover:text-white"
+                >
+                  Contact Us
+                </button>
               </div>
 
               {/* Action Button */}
