@@ -1,6 +1,7 @@
 import os
 import ast
 import difflib
+import pickle
 import numpy as np
 import pandas as pd
 from flask import Flask, request, jsonify
@@ -81,67 +82,34 @@ def stem_text(text):
     return " ".join(y)
 
 def initialize_model():
-    """Loads CSV files and trains the Content-Based Recommendation Engine."""
+    """Loads precomputed movie data and similarity matrix from pickle files."""
     global movies, vectors, similarity, cv
-    print("Initializing Movie Recommendation Engine...")
+    print("Initializing Movie Recommendation Engine (loading pickles)...")
     
-    # Verify dataset file paths
-    movies_path = 'tmdb_5000_movies.csv'
-    credits_path = 'tmdb_5000_credits.csv'
+    models_dir = 'models'
+    movies_path = os.path.join(models_dir, 'movies.pkl')
+    similarity_path = os.path.join(models_dir, 'similarity_top100.pkl')
+    vectorizer_path = os.path.join(models_dir, 'vectorizer.pkl')
+    vectors_path = os.path.join(models_dir, 'vectors_sparse.pkl')
     
-    if not os.path.exists(movies_path) or not os.path.exists(credits_path):
-        raise FileNotFoundError("Missing TMDB 5000 dataset CSV files in workspace root.")
+    if not (os.path.exists(movies_path) and os.path.exists(similarity_path) and 
+            os.path.exists(vectorizer_path) and os.path.exists(vectors_path)):
+        # Fallback to local preprocessing if pickles don't exist
+        print("Pickles not found! Running full preprocessing (this may take a while)...")
+        from preprocess import main as run_preprocessing
+        run_preprocessing()
         
-    # 1. Load Datasets
-    movies_df = pd.read_csv(movies_path)
-    credits_df = pd.read_csv(credits_path)
-    
-    # 2. Merge on Title
-    merged_df = movies_df.merge(credits_df, on='title')
-    
-    # Reset index and drop NaNs in core overview columns
-    merged_df['overview'] = merged_df['overview'].fillna('')
-    
-    # Keep metadata columns for retrieval
-    # 'id_x' is TMDB movie ID from movies dataframe
-    movies = merged_df[['id', 'title', 'overview', 'genres', 'keywords', 'cast', 'crew', 'release_date', 'vote_average', 'popularity']].copy()
-    movies.rename(columns={'id': 'movie_id'}, inplace=True)
-    movies = movies.reset_index(drop=True)
-    
-    # 3. Clean and parse tags
-    print("Cleaning JSON columns and assembling tags...")
-    movies['genres_parsed'] = movies['genres'].apply(convert_json_list)
-    movies['keywords_parsed'] = movies['keywords'].apply(convert_json_list)
-    movies['cast_parsed'] = movies['cast'].apply(convert_cast_list)
-    movies['director_parsed'] = movies['crew'].apply(fetch_director)
-    
-    # Collapse spaces in list features
-    movies['genres_collapsed'] = movies['genres_parsed'].apply(collapse_spaces)
-    movies['keywords_collapsed'] = movies['keywords_parsed'].apply(collapse_spaces)
-    movies['cast_collapsed'] = movies['cast_parsed'].apply(collapse_spaces)
-    movies['director_collapsed'] = movies['director_parsed'].apply(lambda d: [d.replace(" ", "")] if d else [])
-    movies['overview_tokens'] = movies['overview'].apply(lambda x: x.split())
-    
-    # Combine lists into tags
-    movies['tags_list'] = (
-        movies['overview_tokens'] + 
-        movies['genres_collapsed'] + 
-        movies['keywords_collapsed'] + 
-        movies['cast_collapsed'] + 
-        movies['director_collapsed']
-    )
-    
-    # Stem and convert tags to lowercase strings
-    movies['tags'] = movies['tags_list'].apply(lambda x: " ".join(x).lower())
-    movies['tags'] = movies['tags'].apply(stem_text)
-    
-    # 4. Vectorize and compute similarity
-    print("Fitting CountVectorizer and computing cosine similarity...")
-    cv = CountVectorizer(max_features=5000, stop_words='english')
-    vectors = cv.fit_transform(movies['tags']).toarray()
-    similarity = cosine_similarity(vectors)
-    
-    print("Model initialized successfully!")
+    # Load pickle files
+    with open(movies_path, 'rb') as f:
+        movies = pickle.load(f)
+    with open(similarity_path, 'rb') as f:
+        similarity = pickle.load(f)
+    with open(vectorizer_path, 'rb') as f:
+        cv = pickle.load(f)
+    with open(vectors_path, 'rb') as f:
+        vectors = pickle.load(f)
+        
+    print("Model initialized successfully from precomputed files!")
 
 # Load model on startup
 try:
@@ -184,7 +152,7 @@ def get_movie_payload(movie_row, score):
 def vector_search(query, count=6):
     """Calculates query vector similarity against all movie tags."""
     query_stemmed = stem_text(query.lower())
-    query_vector = cv.transform([query_stemmed]).toarray()
+    query_vector = cv.transform([query_stemmed])
     query_similarity = cosine_similarity(query_vector, vectors)[0]
     
     # Sort indices by similarity score descending
@@ -222,14 +190,11 @@ def recommend_similar(movie_title, count=6):
     # 3. If a title is matched, perform content similarity on that movie
     if matched_title:
         movie_idx = movies[movies['title'] == matched_title].index[0]
-        distances = similarity[movie_idx]
+        # similarity is a dict containing top 100 similarities as (similar_idx, score)
+        similar_list = similarity[movie_idx]
         
-        # Sort by distance
-        movie_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])
-        
-        # Exclude the queried movie itself (movie_list[0]) and take the next count
         recs = []
-        for idx, score in movie_list[1:]:
+        for idx, score in similar_list:
             if len(recs) >= count:
                 break
             recs.append(get_movie_payload(movies.iloc[idx], score))
