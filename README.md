@@ -4,6 +4,8 @@ CineMatch AI is a production-grade, Netflix-inspired movie recommendation platfo
 
 Featuring unblocked, lightning-fast movie poster rendering powered by the **OMDb API**, and high-quality fallback logic, the application delivers a seamless user experience.
 
+🔗 Live Project URL
+Frontend Web Application: https://movies-recommendation-system-2-yskk.onrender.com
 ---
 
 ## 🌟 Key Features
@@ -148,6 +150,45 @@ The Flask service serves the following REST endpoints on `port 5000`:
   Lists paginated films sorted by release date descending.
 * **GET `/api/top_rated?page=<page>`**
   Lists paginated movies sorted by vote average ratings.
+
+---
+
+🚀 Key Deployment & Architecture Features
+1. Blueprint Infrastructure-as-Code (render.yaml)
+The deployment is configured using a unified Render Blueprint spec (
+
+render.yaml
+) that provisions both components in a single step:
+
+Python Flask Backend: Powered by Gunicorn, listening dynamically on the designated port.
+React Vite Frontend: A static site build that serves the compiled React app (dist/) directly over Render's global CDN.
+2. Automatic Cross-Service Binding
+Instead of hardcoding APIs, the frontend dynamically binds to the backend using Render's service references:
+
+yaml
+- key: VITE_BACKEND_API_URL
+        fromService:
+          name: cinematch-api-backend
+          type: web
+          property: url
+This ensures the frontend builds with the correct live API endpoint automatically.
+
+3. Enforced Compatibility (Python 3.11.9)
+By setting .python-version and declaring PYTHON_VERSION: 3.11.9 in the infrastructure vars, the build environment pulls pre-compiled wheels for dependency packages (like pandas==2.2.1 and numpy==1.26.4), bypassing meson/ninja compilation failures.
+
+4. Offline Model Precomputation (OOM & Startup Fix)
+To run on Render's 512MB RAM Free Tier and boot up instantly, the application employs a precomputed model strategy:
+
+The Problem: Reading and parsing 45MB of CSV datasets, stemming tags, and calculating a dense 25-million value similarity matrix on startup consumed over 530MB of RAM (crashing the container) and took ~30 seconds (causing port-binding timeouts).
+The Fix: A preprocessing pipeline (
+
+preprocess.py
+) is run locally once, producing compressed models:
+Metadata Storage: movies.pkl (Only holds clean required metadata, ~1.8 MB).
+Pre-sorted Recommendations: similarity_top100.pkl stores only the top 100 similar movie indices/scores for each movie (~11.0 MB), reducing query lookups from $O(N \log N)$ sorting to $O(count)$ lookups.
+Memory Footprint: Startup RAM dropped by 95% (from >500MB to ~25MB), and startup duration dropped to <0.5 seconds.
+5. Sparse Matrix Semantic Fallback
+For searches matching no exact titles, the app uses a CountVectorizer instance (vectorizer.pkl) and a sparse representations of movie vectors (vectors_sparse.pkl — ~1.68 MB) to perform real-time cosine similarity comparisons against user queries using memory-efficient Scipy CSR matrices.
 
 ---
 
